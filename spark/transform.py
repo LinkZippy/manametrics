@@ -1,9 +1,15 @@
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
+import sys
+
+if len(sys.argv) < 2:
+    raise ValueError("Usage: transform.py <input_json_path>")
+
+input_path = sys.argv[1]
 
 spark = SparkSession.builder.appName("mtg_transform").master("local[*]").getOrCreate()
 
-df = spark.read.option("multiline", "true").json("all_cards.json")
+df = spark.read.option("multiline", "true").json(input_path)
 
 # ---------------------------------------------------------------------------
 # STEP A: Filter out promos and foil-only printings.
@@ -131,6 +137,11 @@ df_final = df_edhrec.select(
     F.col("price_usd"),
     F.col("log_price_usd"),
 )
+
+
+# Write curated Parquet for S3/Databricks
+df_final.write.mode("overwrite").parquet("/tmp/card_price_features")
+print("Parquet written to /tmp/card_price_features")
 
 pdf = df_final.toPandas()
 pdf.columns = [c.upper() for c in pdf.columns]  # Snowflake expects uppercase column names

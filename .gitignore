@@ -3,6 +3,9 @@
 *.csv
 *.parquet
 
+# Trained model artifacts - large binary files, rebuilt by running models/train.py
+*.joblib
+
 # Python
 __pycache__/
 *.pyc
@@ -20,3 +23,4 @@ simple_auth_manager_passwords.json.generated
 
 # Environment variables / secrets - if you ever add a .env file
 .env
+*.pem
