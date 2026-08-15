@@ -1,8 +1,8 @@
-# MTG Price Predictor
+# ManaMetrics
 
 An end-to-end data engineering portfolio project that ingests Magic: The Gathering card data daily, engineers price-relevant features, trains an XGBoost model, and surfaces buy/sell signals through a live Streamlit dashboard.
 
-**Stack:** Apache Airflow · PySpark · AWS S3 · Snowflake · XGBoost / LightGBM · Streamlit
+**Stack:** Apache Airflow, PySpark, AWS S3, Snowflake, XGBoost/LightGBM, Streamlit
 
 ---
 
