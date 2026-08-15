@@ -31,7 +31,7 @@ EDHREC_CHEAP   = 15.0
 # ---------------------------------------------------------------------------
 # Page config + custom CSS — dark futuristic theme
 # ---------------------------------------------------------------------------
-st.set_page_config(page_title="MTG PRICE INTELLIGENCE", layout="wide")
+st.set_page_config(page_title="MANAMETRICS", layout="wide")
 
 st.markdown("""
 <style>
@@ -124,7 +124,7 @@ hr { border-color: #1a3050; }
 # ---------------------------------------------------------------------------
 # Header
 # ---------------------------------------------------------------------------
-st.markdown("# MTG PRICE INTELLIGENCE")
+st.markdown("# MANAMETRICS")
 st.markdown(
     "<p style='color:#3a6080;font-size:0.72rem;letter-spacing:0.08em;margin-top:-12px'>"
     "LIVE PRICES // SNOWFLAKE · DAILY AIRFLOW PIPELINE · XGBOOST v1"
