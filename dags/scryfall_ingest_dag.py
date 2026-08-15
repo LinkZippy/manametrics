@@ -27,7 +27,7 @@ def scryfall_ingest_dag():
         all_cards_entry = next(
             item for item in bulk_data_list if item["type"] == "all_cards"
         )
-        download_url = all_cards_entry["download_uri"]
+        download_url = all_cards_entry["jsonl_download_uri"]
         print(f"all_cards files live at: {download_url}")
         return download_url
 
@@ -39,7 +39,10 @@ def scryfall_ingest_dag():
         response.raw.decode_content = True
 
         run_date = logical_date.strftime("%Y-%m-%d")
-        s3_key = f"raw/scryfall/dt={run_date}/all_cards.json"
+        # Scryfall now serves gzip-compressed JSONL (.jsonl.gz).
+        # We stream the raw bytes straight to S3 and keep the .jsonl.gz
+        # extension so Spark auto-detects gzip compression when reading.
+        s3_key = f"raw/scryfall/dt={run_date}/all_cards.jsonl.gz"
 
         hook = S3Hook(aws_conn_id = "aws_default")
         hook.load_file_obj(

@@ -177,8 +177,12 @@ def load_snowflake_cards() -> pd.DataFrame:
         )
         df = pd.read_sql(
             """
-            SELECT name, set_code, price_usd, price_usd_foil,
-                   printing_age_days, is_reserved_list, edhrec_rank, loaded_at
+            SELECT name, set_code, price_usd, price_usd_foil, loaded_at,
+                   printing_age_days, reprint_count, is_reserved_list, edhrec_rank,
+                   rarity_rank, is_masters_set, is_draft_innovation,
+                   legal_modern, legal_legacy, legal_vintage, legal_commander,
+                   is_creature, is_instant, is_sorcery, is_enchantment,
+                   is_artifact, is_planeswalker
             FROM card_price_features
             ORDER BY price_usd DESC
             """,

@@ -17,8 +17,8 @@ def mtg_transform_dag():
         import os
 
         run_date = logical_date.strftime("%Y-%m-%d")
-        s3_key = f"raw/scryfall/dt={run_date}/all_cards.json"
-        local_path = f"/tmp/all_cards_{run_date}.json"
+        s3_key = f"raw/scryfall/dt={run_date}/all_cards.jsonl.gz"
+        local_path = f"/tmp/all_cards_{run_date}.jsonl.gz"
 
         hook = S3Hook(aws_conn_id="aws_default")
         tmp_path = hook.download_file(
