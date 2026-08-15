@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS mtg_db.curated.card_price_features (
     edhrec_rank INTEGER,
     price_usd FLOAT,
     log_price_usd FLOAT,
+    price_usd_foil FLOAT,      -- foil price, stored for dashboard display only (not used in model)
     loaded_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
 )
 ;

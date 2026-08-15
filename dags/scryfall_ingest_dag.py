@@ -2,6 +2,7 @@ from airflow.sdk import task, dag
 from datetime import datetime
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 import requests
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
 HEADERS = {
     "User-Agent": "PhoomMTGPricePredictor/0.1",
@@ -50,7 +51,18 @@ def scryfall_ingest_dag():
 
         print(f"Uploaded bulk data to s3://mtg-price-predictor-phoom/{s3_key}")
 
-    download_and_upload(get_bulk_data())
+    # Task wiring lives here in the DAG body, NOT inside a task function.
+    # Airflow reads this at parse time to build the task graph.
+    upload = download_and_upload(get_bulk_data())
+
+    trigger_transform = TriggerDagRunOperator(
+        task_id="trigger_transform",
+        trigger_dag_id="mtg_transform_dag",
+        wait_for_completion=False,
+    )
+
+    upload >> trigger_transform
 
 scryfall_ingest_dag()
+
 

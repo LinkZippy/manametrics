@@ -40,6 +40,12 @@ print(f"After dropping basic lands: {df_filtered.count()} rows")
 # ---------------------------------------------------------------------------
 df_priced = df_filtered.withColumn(
     "price_usd", F.col("prices.usd").cast("double")
+).withColumn(
+    # prices.usd_foil is the foil premium price. We store it alongside the
+    # nonfoil price so the dashboard can display it for foil cards in the
+    # inventory. We do NOT use it in model training — the model is trained
+    # only on nonfoil prices to avoid mixing pricing regimes.
+    "price_usd_foil", F.col("prices.usd_foil").cast("double")
 ).filter(F.col("price_usd").isNotNull())
 print(f"After requiring a non-null usd price: {df_priced.count()} rows")
  
@@ -136,6 +142,7 @@ df_final = df_edhrec.select(
     F.col("edhrec_rank"),
     F.col("price_usd"),
     F.col("log_price_usd"),
+    F.col("price_usd_foil"),   # foil price stored for dashboard display only
 )
 
 
