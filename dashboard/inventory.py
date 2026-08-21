@@ -157,6 +157,11 @@ def parse_inventory(raw_bytes: bytes) -> pd.DataFrame:
     df["_name_key"] = df["Card Name"].str.strip().str.lower()
     df["_set_key"]  = df["Set Code"].str.strip().str.lower()
     df["is_foil"]   = df["Printing"].str.strip().str.lower() == "foil"
+    # Collector number is optional — present in exports from Moxfield/TCGPlayer etc.
+    if "Card Number" in df.columns:
+        df["_collector_key"] = df["Card Number"].astype(str).str.strip().str.lower()
+    else:
+        df["_collector_key"] = None
     return df
 
 # ---------------------------------------------------------------------------
@@ -177,7 +182,7 @@ def load_snowflake_cards() -> pd.DataFrame:
         )
         df = pd.read_sql(
             """
-            SELECT name, set_code, price_usd, price_usd_foil, loaded_at,
+            SELECT name, set_code, collector_number, price_usd, price_usd_foil, loaded_at,
                    printing_age_days, reprint_count, is_reserved_list, edhrec_rank,
                    rarity_rank, is_masters_set, is_draft_innovation,
                    legal_modern, legal_legacy, legal_vintage, legal_commander,
@@ -190,8 +195,12 @@ def load_snowflake_cards() -> pd.DataFrame:
         )
         conn.close()
     df["IS_RESERVED_LIST"] = df["IS_RESERVED_LIST"].astype(int)
-    df["_name_key"] = df["NAME"].str.strip().str.lower()
-    df["_set_key"]  = df["SET_CODE"].str.strip().str.lower()
+    df["_name_key"]      = df["NAME"].str.strip().str.lower()
+    df["_set_key"]       = df["SET_CODE"].str.strip().str.lower()
+    df["_collector_key"] = df["COLLECTOR_NUMBER"].str.strip().str.lower()
+    # Pre-compute a numeric sort key so standard-frame arts (lower numbers)
+    # take priority over extended/alternate-art treatments when deduplicating.
+    df["_cn_sort"] = pd.to_numeric(df["COLLECTOR_NUMBER"], errors="coerce").fillna(9999)
     return df
 
 # ---------------------------------------------------------------------------
@@ -210,8 +219,12 @@ def load_model():
 # ---------------------------------------------------------------------------
 def attach_live_prices(inv: pd.DataFrame, sf: pd.DataFrame) -> pd.DataFrame:
     inv = inv.copy()
+    # Sort by _cn_sort ascending so the standard-frame printing (lower collector
+    # number) wins when multiple rows share the same (name, set_code).
+    # Extended-art and alternate-art treatments carry a premium we don't want
+    # to accidentally assign to a card the user owns in the regular frame.
     sf_dedup = (
-        sf.sort_values("LOADED_AT", ascending=False)
+        sf.sort_values(["_name_key", "_set_key", "_cn_sort"])
           .drop_duplicates(subset=["_name_key", "_set_key"])
     )
     nonfoil_lkp = sf_dedup.set_index(["_name_key", "_set_key"])["PRICE_USD"].to_dict()
@@ -220,6 +233,17 @@ def attach_live_prices(inv: pd.DataFrame, sf: pd.DataFrame) -> pd.DataFrame:
 
     def live(row):
         key = (row["_name_key"], row["_set_key"])
+        # If we have an exact collector number match, prefer it
+        if row.get("_collector_key") is not None:
+            sf_exact = sf[
+                (sf["_name_key"] == row["_name_key"]) &
+                (sf["_set_key"]  == row["_set_key"])  &
+                (sf["_collector_key"] == row["_collector_key"])
+            ]
+            if not sf_exact.empty:
+                r = sf_exact.iloc[0]
+                return float(r["PRICE_USD_FOIL"]) if row["is_foil"] else float(r["PRICE_USD"])
+        # Fall back to standard-frame dedup
         return (foil_lkp.get(key) or nonfoil_lkp.get(key)) if row["is_foil"] else nonfoil_lkp.get(key)
 
     inv["Live ($)"]     = inv.apply(live, axis=1)
@@ -319,7 +343,16 @@ def make_display_row(row) -> dict:
     if is_foil or pd.isna(live):
         predicted = "N/A"
     else:
-        sf_row = sf[(sf["_name_key"] == row["_name_key"]) & (sf["_set_key"] == row["_set_key"])]
+        sf_match = sf[(sf["_name_key"] == row["_name_key"]) & (sf["_set_key"] == row["_set_key"])]
+        if not sf_match.empty:
+            # Pick exact collector number if available, else standard frame (lowest number)
+            if row.get("_collector_key") is not None:
+                exact = sf_match[sf_match["_collector_key"] == row["_collector_key"]]
+                sf_row = exact if not exact.empty else sf_match.sort_values("_cn_sort").head(1)
+            else:
+                sf_row = sf_match.sort_values("_cn_sort").head(1)
+        else:
+            sf_row = sf_match
         predicted = (
             f"${np.expm1(xgb_model.predict(sf_row[FEATURES].values)[0]):.2f}"
             if not sf_row.empty else "N/A"
