@@ -233,6 +233,7 @@ df_final = df_cardtype.select(
     F.col("oracle_id"),
     F.col("name"),
     F.col("set").alias("set_code"),
+    F.col("collector_number"),
     F.col("released_at"),
     F.col("original_release_date").cast("string"),
     F.col("printing_age_days"),

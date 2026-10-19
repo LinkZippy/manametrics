@@ -21,7 +21,7 @@ def scryfall_ingest_dag():
     @task
     def get_bulk_data():
         response = requests.get("https://api.scryfall.com/bulk-data", headers=HEADERS)
-        response.raise_for_status
+        response.raise_for_status()
         bulk_data_list = response.json()["data"]
 
         all_cards_entry = next(
@@ -34,7 +34,7 @@ def scryfall_ingest_dag():
     @task
     def download_and_upload(download_url : str, logical_date : datetime = None):
         response = requests.get(download_url, headers = HEADERS, stream = True)
-        response.raise_for_status
+        response.raise_for_status()
 
         response.raw.decode_content = True
 
@@ -67,5 +67,3 @@ def scryfall_ingest_dag():
     upload >> trigger_transform
 
 scryfall_ingest_dag()
-
-

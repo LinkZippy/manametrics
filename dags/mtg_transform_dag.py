@@ -1,5 +1,8 @@
-from airflow.sdk import task, dag
 from datetime import datetime
+from pathlib import Path
+import shlex
+
+from airflow.sdk import task, dag
 
 
 @dag(
@@ -33,9 +36,10 @@ def mtg_transform_dag():
     @task.bash
     def run_transform(input_path: str) -> str:
         """Run PySpark transform. Writes Parquet to /tmp/card_price_features and loads Snowflake."""
+        transform_script = Path(__file__).resolve().parents[1] / "spark" / "transform.py"
         return (
             f"source ~/airflow-learning/venv/bin/activate && "
-            f"python3 ~/mtg-price-predictor/spark/transform.py {input_path}"
+            f"python3 {shlex.quote(str(transform_script))} {shlex.quote(input_path)}"
         )
 
     @task.bash

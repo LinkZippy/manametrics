@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS mtg_db.curated.card_price_features (
     oracle_id             STRING,
     name                  STRING,
     set_code              STRING,        -- renamed from `set` (SQL reserved word)
+    collector_number      STRING,        -- e.g. "316" or "406★"; needed for exact printing match
     released_at           DATE,
     original_release_date DATE,
 
@@ -68,17 +69,18 @@ CREATE TABLE IF NOT EXISTS mtg_db.curated.card_price_features (
 -- ============================================================
 --
 -- ALTER TABLE mtg_db.curated.card_price_features
---     ADD COLUMN IF NOT EXISTS reprint_count INTEGER,
---     ADD COLUMN IF NOT EXISTS rarity_rank INTEGER,
---     ADD COLUMN IF NOT EXISTS is_masters_set INTEGER,
---     ADD COLUMN IF NOT EXISTS is_draft_innovation INTEGER,
---     ADD COLUMN IF NOT EXISTS legal_modern INTEGER,
---     ADD COLUMN IF NOT EXISTS legal_legacy INTEGER,
---     ADD COLUMN IF NOT EXISTS legal_vintage INTEGER,
---     ADD COLUMN IF NOT EXISTS legal_commander INTEGER,
---     ADD COLUMN IF NOT EXISTS is_creature INTEGER,
---     ADD COLUMN IF NOT EXISTS is_instant INTEGER,
---     ADD COLUMN IF NOT EXISTS is_sorcery INTEGER,
---     ADD COLUMN IF NOT EXISTS is_enchantment INTEGER,
---     ADD COLUMN IF NOT EXISTS is_artifact INTEGER,
---     ADD COLUMN IF NOT EXISTS is_planeswalker INTEGER;
+--     ADD collector_number STRING,
+--         reprint_count INTEGER,
+--         rarity_rank INTEGER,
+--         is_masters_set INTEGER,
+--         is_draft_innovation INTEGER,
+--         legal_modern INTEGER,
+--         legal_legacy INTEGER,
+--         legal_vintage INTEGER,
+--         legal_commander INTEGER,
+--         is_creature INTEGER,
+--         is_instant INTEGER,
+--         is_sorcery INTEGER,
+--         is_enchantment INTEGER,
+--         is_artifact INTEGER,
+--         is_planeswalker INTEGER;
