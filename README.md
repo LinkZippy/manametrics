@@ -91,6 +91,7 @@ Run `snowflake/setup.sql` in Snowsight once to create the warehouse, database, s
 **Tasks:**
 
 **`get_bulk_data`** — Queries `https://api.scryfall.com/bulk-data` to get the current download URL. Scryfall separates the metadata endpoint from the actual file so the download URL changes with each daily snapshot. The relevant field is `jsonl_download_uri` on the `all_cards` entry.
+Both Scryfall requests check the HTTP status before using the response, so API or download failures fail the task instead of being mistaken for valid data.
 
 > **Why a User-Agent header?** Scryfall rejects requests from the default `python-requests` User-Agent with a 400 error. A descriptive custom header is required.
 
@@ -110,7 +111,7 @@ Run `snowflake/setup.sql` in Snowsight once to create the warehouse, database, s
 
 **`download_from_s3`** — Downloads the JSONL file for the run's logical date from S3 to `/tmp/`. Returns the local path for the next task.
 
-**`run_transform`** — Bash task that activates the venv and runs `spark/transform.py <local_path>`. Using a bash task (rather than a Python task) keeps PySpark's JVM lifecycle separate from Airflow's worker process.
+**`run_transform`** — Bash task that activates the venv and runs `spark/transform.py <local_path>`. The script path is resolved relative to the DAG file, so the task works from this repository's actual checkout path. Using a bash task (rather than a Python task) keeps PySpark's JVM lifecycle separate from Airflow's worker process.
 
 **`upload_parquet_to_s3`** — Syncs the curated Parquet output from `/tmp/card_price_features/` to `s3://mtg-price-predictor-phoom/curated/card_price_features/`.
 
